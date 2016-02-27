@@ -1,12 +1,16 @@
 package com.example.saulmm.splashes;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -21,9 +25,39 @@ public class OnboardingWithCenterAnimationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_center);
+
+        final View image = findViewById(R.id.img_logo);
+        image.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                adjustImagePadding();
+                image.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
+    }
+
+    // Return screen coordinate of the vertical center of 'view'
+    private int getVerticalCenter(View view)
+    {
+        int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+
+        return xy[1] + view.getPaddingTop() + view.getHeight()/2;
+    }
+
+    public void adjustImagePadding() {
+        int imageCenterWindowBackground = getVerticalCenter(getWindow().getDecorView());
+        int imageCenterContent = getVerticalCenter(findViewById(R.id.onboarding_center_top));
+        int delta = imageCenterContent - imageCenterWindowBackground;
+
+        View image = findViewById(R.id.img_logo);
+        if (delta > 0) {
+            image.setPadding(0, 0, 0, 2 * delta);
+        } else {
+            image.setPadding(0, -2 * delta, 0, 0);
+        }
     }
 
     @Override
@@ -43,8 +77,8 @@ public class OnboardingWithCenterAnimationActivity extends AppCompatActivity {
         ViewGroup container = (ViewGroup) findViewById(R.id.container);
 
         ViewCompat.animate(logoImageView)
-            .translationY(0)
-            .setStartDelay(STARTUP_DELAY)
+                .translationY(0)
+                .setStartDelay(STARTUP_DELAY)
             .setDuration(ANIM_ITEM_DURATION).setInterpolator(
                 new DecelerateInterpolator(1.2f)).start();
 
